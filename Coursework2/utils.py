@@ -40,7 +40,7 @@ class ReplayBuffer():
         return random.sample(self.buffer, batch_size)
 
 class DQN(nn.Module):
-    def __init__(self, layer_sizes:list[int]):
+    def __init__(self, layer_sizes):
         """
         DQN initialisation
 
@@ -125,6 +125,8 @@ def loss(policy_dqn:DQN, target_dqn:DQN,
         Float scalar tensor with loss value
     """
 
-    bellman_targets = (~dones).reshape(-1)*(target_dqn(next_states)).max(1).values + rewards.reshape(-1)
+#     bellman_targets = (~dones).reshape(-1)*(target_dqn(next_states)).max(1).values + rewards.reshape(-1)
+    next_action = policy_dqn(next_states).argmax(dim=1).unsqueeze(-1)
+    bellman_targets = (~dones).reshape(-1)* target_dqn(next_states).gather(1, next_action).reshape(-1) + rewards.reshape(-1)
     q_values = policy_dqn(states).gather(1, actions).reshape(-1)
     return ((q_values - bellman_targets)**2).mean()
